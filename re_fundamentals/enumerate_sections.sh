@@ -29,40 +29,53 @@ readelf -S "$file_name"
 
 echo ""
 echo "========================================"
-echo "Identifying unusual sections..."
+echo "Identifying all sections with their sizes..."
 echo ""
 
-sections=$(readelf -S "$file_name" 2>/dev/null | tail -n +6 | grep -v "^$" | \
-awk '{print $2, $5}')
-
-echo "Standard sections found:"
-echo "$sections"
+readelf -S "$file_name" 2>/dev/null | awk '
+/^\s*\[/ {
+    name = $2
+    getline
+    size = $1
+    print name " Size: " size
+}' | tee /tmp/sections_all.txt
 
 echo ""
-echo "Looking for non-standard sections..."
+echo "Looking for unusual sections (non-standard ELF sections)..."
+echo ""
 
-unusual=$(readelf -S "$file_name" 2>/dev/null | tail -n +6 | grep -v "^$" | \
-grep -v "\.text" | grep -v "\.data" | grep -v "\.bss" | grep -v "\.rodata" | \
-grep -v "\.symtab" | grep -v "\.strtab" | grep -v "\.shstrtab" | \
-grep -v "\.rel\|\.rela" | grep -v "\.dynamic" | grep -v "\.note" | \
-grep -v "\.gnu" | grep -v "^ELF")
+unusual=$(readelf -S "$file_name" 2>/dev/null | awk '
+/^\s*\[/ {
+    name = $2
+    getline
+    size = $1
+    if (name !~ /^\.text$|^\.data$|^\.bss$|^\.rodata$|^\.symtab$|^\.strtab$|^\.shstrtab$|^\.rel|^\.rela|^\.dynamic$|^\.note|^\.gnu|^\.init|^\.fini|^\.plt|^\.got|^\.eh_frame|^\.comment/) {
+        print name " " size
+    }
+}')
 
 if [ -n "$unusual" ]; then
     echo "$unusual"
     echo ""
     echo "Unusual section found!"
-    unusual_name=$(echo "$unusual" | awk '{print $2}')
-    unusual_size=$(echo "$unusual" | awk '{print $5}')
+    unusual_count=$(echo "$unusual" | wc -l)
     
-    echo "Section: $unusual_name"
-    echo "Size: $unusual_size"
-    
-    echo "$unusual_size" > "$script_dir/size.txt"
-    echo "readelf -S $file_name" > "$script_dir/command.txt"
-    
-    echo ""
-    echo "✓ Created size.txt with: $unusual_size"
-    echo "✓ Created command.txt with the command"
+    if [ "$unusual_count" -eq 1 ]; then
+        unusual_name=$(echo "$unusual" | awk '{print $1}')
+        unusual_size=$(echo "$unusual" | awk '{print $2}')
+        echo "Section: $unusual_name"
+        echo "Size: $unusual_size"
+        
+        echo "$unusual_size" > "$script_dir/size.txt"
+        echo "readelf -S $file_name" > "$script_dir/command.txt"
+        
+        echo ""
+        echo "✓ Created size.txt with: $unusual_size"
+        echo "✓ Created command.txt"
+    else
+        echo "Multiple unusual sections found."
+        echo "$unusual"
+    fi
 else
     echo "No obvious unusual sections found."
     echo "All sections appear to be standard ELF sections."
