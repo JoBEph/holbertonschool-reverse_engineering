@@ -1,7 +1,13 @@
 #!/bin/bash
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$script_dir/messages.sh"
+
+if [ -f "$script_dir/messages.sh" ]; then
+    source "$script_dir/messages.sh"
+else
+    echo "Error: messages.sh not found."
+    exit 1
+fi
 
 if [ $# -eq 0 ]; then
     echo "Error: No file provided. Usage: $0 <ELF_file>"
@@ -15,9 +21,9 @@ if [ ! -f "$file_name" ]; then
     exit 1
 fi
 
-header_info=$(readelf -h "$file_name" 2>&1)
+header_info=$(readelf -h "$file_name" 2>/dev/null)
 
-if echo "$header_info" | grep -q "Error:"; then
+if [ $? -ne 0 ] || [ -z "$header_info" ]; then
     echo "Error: '$file_name' is not a valid ELF file."
     exit 1
 fi
@@ -32,6 +38,6 @@ byte_order=$(echo "$header_info" | grep "Data:" | \
 sed 's/.*Data:[[:space:]]*//')
 
 entry_point_address=$(echo "$header_info" | \
-grep "Entry point address:" | awk '{print $4}')
+grep "Entry point address:" | awk '{print $NF}')
 
 display_elf_header_info
