@@ -40,11 +40,6 @@
    HOLB{Reverse_Engineering_is_Fun}
    ```
 
-6. **Save the flag**
-   ```bash
-   echo "HOLB{Reverse_Engineering_is_Fun}" > 0-flag.txt
-   ```
-
 ---
 
 ## Task 1
@@ -96,11 +91,6 @@
 6. **Result**
    ```
    Holberton{implementing_decrypt_function_on_your_own_is_done!}
-   ```
-
-7. **Save the flag**
-   ```bash
-   echo 'Holberton{implementing_decrypt_function_on_your_own_is_done!}' > 1-flag.txt
    ```
 
 ---
@@ -158,16 +148,8 @@
    - Parse modulus: `0xffffffffffffffb`
    - Compute key: `key = pow(2, exponent, modulus)` using binary exponentiation
    - Decrypt by computing modular exponentiation for each 8-byte chunk to retrieve ASCII values
-   ```bash
-   python3 solve.py
-   ```
 
 6. **Result**
    ```
    Holberton{optimizingslowcode_isannoying_but_is_a_must}
-   ```
-
-7. **Save the flag**
-   ```bash
-   echo 'Holberton{optimizingslowcode_isannoying_but_is_a_must}' > 2-flag.txt
    ```
