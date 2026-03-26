@@ -85,9 +85,6 @@
    input[i] = (encrypted[i] - key[(i+1) % 11]) XOR key[i % 11]
    ```
 
-5. **Implement decryption script**
-   Create `decrypt.py` with the reverse algorithm and apply it to the encrypted bytes.
-
 6. **Result**
    ```
    Holberton{implementing_decrypt_function_on_your_own_is_done!}
@@ -143,7 +140,6 @@
    ```
 
 5. **Implement optimized decryption**
-   Create `solve.py` script:
    - Parse exponent: `0xffffffffffff`
    - Parse modulus: `0xffffffffffffffb`
    - Compute key: `key = pow(2, exponent, modulus)` using binary exponentiation
