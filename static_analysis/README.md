@@ -26,10 +26,15 @@
    Shows the assembly code where the flag is hardcoded as byte values.
 
 4. **Decode the hex bytes to ASCII**
-   The assembly shows bytes being moved into memory:
-    ```
-   - 0x48=H, 0x4f=O, 0x4c=L, 0x42=B, 0x7b={, 0x52=R, 0x65=e, 0x76=v, 0x65=e, 0x72=r, 0x73=s, 0x65=e, 0x5f=_, 0x45=E, 0x6e=n, 0x67=g, 0x69=i, 0x6e=n, 0x65=e, 0x65=e, 0x72=r, 0x69=i, 0x6e=n, 0x67=g, 0x5f=_, 0x69=i, 0x73=s, 0x5f=_, 0x46=F, 0x75=u, 0x6e=n, 0x7d=}
-    ```
+   The flag is constructed dynamically on the stack, character by character, to evade the `strings` command.
+   
+   Hexadecimal values stored on the stack:
+   ```
+   0x48=H, 0x4f=O, 0x4c=L, 0x42=B, 0x7b={, 0x52=R, 0x65=e, 0x76=v, 0x65=e, 
+   0x72=r, 0x73=s, 0x65=e, 0x5f=_, 0x45=E, 0x6e=n, 0x67=g, 0x69=i, 0x6e=n, 
+   0x65=e, 0x65=e, 0x72=r, 0x69=i, 0x6e=n, 0x67=g, 0x5f=_, 0x69=i, 0x73=s, 
+   0x5f=_, 0x46=F, 0x75=u, 0x6e=n, 0x7d=}
+   ```
 5. **Result**
    ```
    HOLB{Reverse_Engineering_is_Fun}
@@ -96,4 +101,73 @@
 7. **Save the flag**
    ```bash
    echo 'Holberton{implementing_decrypt_function_on_your_own_is_done!}' > 1-flag.txt
+   ```
+
+---
+
+## Task 2
+
+**Objective:** main2  
+**Goal:** 2-flag.txt
+
+### Steps to Optimize and Decrypt
+
+1. **Analyze binary symbols**
+   ```bash
+   nm main2 | grep -E "decrypt|modulus|exponent"
+   ```
+   Identifies:
+   - `naive_modular_exponentiation` function (SLOW - inefficient)
+   - `slow_decrypt_flag` function at `0x1286`
+   - `encrypted_flag` at `0x4020` (56 bytes)
+   - `exponent` at `0x4058` (8 bytes)
+   - `modulus` at `0x4060` (8 bytes)
+
+2. **Extract encrypted data and parameters**
+   ```bash
+   objdump -s -j .data main2
+   ```
+   Data at offsets:
+   - encrypted_flag: `8e82d972b66c836fa896da60a7779a69...a763f700`
+   - exponent: `ffffffff ffff0000` (little-endian: 0xffffffffffff)
+   - modulus: `fbffffff ffffff0f` (little-endian: 0xffffffffffffffb)
+
+3. **Identify the bottleneck**
+   ```bash
+   objdump -M intel -d main2 | grep -A 40 "<naive_modular_exponentiation>:"
+   ```
+   
+   **Problem:** Naïve algorithm does O(exponent) multiplications
+   ```
+   result = 1
+   for i in range(exponent):
+       result = (result * base) mod modulus
+   ```
+   With exponent = 281474976710655, this takes BILLIONS of iterations!
+
+4. **Solution: Use Binary Exponentiation**
+   **Key insight:** Use Python's built-in `pow(base, exp, mod)` which implements binary exponentiation.
+   ```
+   Time Complexity: O(log exponent) instead of O(exponent)
+   Speedup: From 2^48 operations to 48 operations!
+   ```
+
+5. **Implement optimized decryption**
+   Create `solve.py` script:
+   - Parse exponent: `0xffffffffffff`
+   - Parse modulus: `0xffffffffffffffb`
+   - Compute key: `key = pow(2, exponent, modulus)` using binary exponentiation
+   - Decrypt by computing modular exponentiation for each 8-byte chunk to retrieve ASCII values
+   ```bash
+   python3 solve.py
+   ```
+
+6. **Result**
+   ```
+   Holberton{optimizingslowcode_isannoying_but_is_a_must}
+   ```
+
+7. **Save the flag**
+   ```bash
+   echo 'Holberton{optimizingslowcode_isannoying_but_is_a_must}' > 2-flag.txt
    ```
