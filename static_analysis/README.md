@@ -149,3 +149,62 @@
    ```
    Holberton{optimizingslowcode_isannoying_but_is_a_must}
    ```
+
+---
+
+## Task 3
+
+**Objective:** main3  
+**Goal:** 3-flag.txt
+
+### Steps to Reverse Engineer the Obfuscated Flag
+
+1. **Analyze binary symbols**
+   ```bash
+   nm main3 | grep -E "check_flag"
+   ```
+   Identifies:
+   - `check_flag` function at `0x11c9`
+
+2. **Disassemble the check_flag function**
+   ```bash
+   objdump -M intel -d main3 | grep -A 30 "<check_flag>:"
+   ```
+   Reveals 59 hardcoded obfuscated DWORD values stored on the stack.
+
+3. **Extract the obfuscated values**
+   Stack setup shows:
+   ```
+   0x80, 0xe4, 0x08, 0x18, 0x4a, 0x58, 0xb8, 0xe4, 0xac, 0x34,
+   0x58, 0xe4, 0x7e, 0xbc, 0x9e, 0x8c, 0x7e, 0xd0, 0xc0, 0x7c,
+   0xac, 0xf4, 0x7e, 0x28, 0x9e, 0x04, 0x7e, 0xbc, 0x9e, 0x8c,
+   0x7e, 0x5c, 0x14, 0x4c, 0x7e, 0x5c, 0x7e, 0x6c, 0x02, 0x14,
+   0xb8, 0x4c, 0x14, 0xa4, 0x9e, 0x08, 0x7e, 0xe4, 0xf4, 0x08,
+   0x6a, 0x14, 0xa6, 0x5c, 0xb8, 0x7c, 0x9e, 0x28, 0x3e,
+   ```
+
+4. **Analyze the verification loop**
+   ```bash
+   objdump -M intel -d main3 | grep -A 50 "1401:"
+   ```
+   
+   **Obfuscation algorithm discovered:**
+   ```
+   for i in range(59):
+       if i % 2 == 0:  # even position
+           transformed = (input_char * 0xd2) ^ 0x90
+       else:  # odd position
+           transformed = (input_char * 0x3c) ^ 0xe0
+       
+       transformed = transformed & 0xFF
+       if transformed != obfuscated[i]:
+           return False  # Incorrect flag
+   ```
+
+5. **Reverse the obfuscation**
+   For each obfuscated value, brute-force the original character by testing all ASCII printable values (32-126) against the formula until finding matches. Handle collisions by preferring lowercase letters and underscores.
+
+6. **Result**
+   ```
+   Holberton{Do_you_think_now_you_are_a_master_of_obfuscation?}
+   ```
