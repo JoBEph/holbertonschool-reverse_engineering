@@ -208,3 +208,59 @@
    ```
    Holberton{Do_you_think_now_you_are_a_master_of_obfuscation?}
    ```
+
+---
+
+## Task 4
+
+**Objective:** task4.asm  
+**Goal:** 4-flag.txt
+
+### Steps to Reverse Engineer the Assembly Code
+
+1. **Analyze the assembly structure**
+   ```bash
+   cat task4.asm
+   ```
+   Key sections:
+   - `obfuscated_flag`: 28 DWORD values containing obfuscated characters
+   - `divisor`: 3
+   - `check_loop`: Verification loop iterating through all 28 values
+
+2. **Understand the obfuscation operations**
+   
+   **Key transformations in the check_loop:**
+   ```asm
+   mov ebx, [edi + ecx * 4]    ; Load obfuscated DWORD value
+   xor ebx, 0x55               ; ebx ^= 0x55
+   sub ebx, 7                  ; ebx -= 7
+   idiv dword [divisor]        ; Divide by 3
+   ```
+
+3. **Extract the obfuscated values**
+   All 28 DWORD values from the `.data` section:
+   ```
+   0x8a, 0x101, 0x11e, 0x178, 0x163, 0x108, 0x136, 0x101, 0x104, 0x12d,
+   0x178, 0x17f, 0x165, 0x11d, 0x171, 0x136, 0x101, 0x171, 0x17f, 0x135,
+   0x135, 0x163, 0x11b, 0x178, 0x11e, 0x127, 0x3f, 0x12b
+   ```
+
+4. **Derive the deobfuscation formula**
+   
+   By analyzing the assembly operations:
+   1. Each obfuscated value is XORed with 0x55
+   2. Then 7 is subtracted
+   3. The result is divided by 3
+   
+   **Deobfuscation formula:**
+   ```
+   character = ((obfuscated ^ 0x55) - 7) / 3
+   ```
+
+5. **Apply deobfuscation**
+   For each of the 28 obfuscated values, apply the formula and convert to ASCII.
+
+6. **Result**
+   ```
+   Holberton{back_to_assembly!}
+   ```
